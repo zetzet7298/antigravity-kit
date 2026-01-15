@@ -76,6 +76,45 @@ const copyAgentFolder = (tempDir, destDir) => {
     fs.cpSync(sourceAgent, destDir, { recursive: true });
 };
 
+/**
+ * Update .gitignore to include .agent folder
+ * @param {string} targetDir - Target project directory
+ * @returns {boolean} - True if .gitignore was updated
+ */
+const updateGitignore = (targetDir) => {
+    const gitignorePath = path.join(targetDir, '.gitignore');
+    const entryToAdd = AGENT_FOLDER;
+
+    // Check if .gitignore exists
+    if (fs.existsSync(gitignorePath)) {
+        const content = fs.readFileSync(gitignorePath, 'utf-8');
+        const lines = content.split(/\r?\n/);
+
+        // Check if .agent is already in .gitignore
+        const hasEntry = lines.some(line =>
+            line.trim() === entryToAdd ||
+            line.trim() === `${entryToAdd}/` ||
+            line.trim() === `/${entryToAdd}` ||
+            line.trim() === `/${entryToAdd}/`
+        );
+
+        if (!hasEntry) {
+            // Add .agent to .gitignore
+            const newContent = content.endsWith('\n')
+                ? `${content}${entryToAdd}\n`
+                : `${content}\n${entryToAdd}\n`;
+            fs.writeFileSync(gitignorePath, newContent);
+            return true;
+        }
+    } else {
+        // Create new .gitignore with .agent
+        fs.writeFileSync(gitignorePath, `${entryToAdd}\n`);
+        return true;
+    }
+
+    return false;
+};
+
 // ============================================================================
 // COMMANDS
 // ============================================================================
@@ -122,6 +161,9 @@ const initCommand = async (options) => {
         // Copy .agent folder
         copyAgentFolder(tempDir, agentDir);
 
+        // Update .gitignore
+        const gitignoreUpdated = updateGitignore(targetDir);
+
         // Cleanup
         cleanup(tempDir);
 
@@ -131,6 +173,9 @@ const initCommand = async (options) => {
         console.log(chalk.gray('\n────────────────────────────────────────'));
         console.log(chalk.white('📁 Result:'));
         console.log(`   ${chalk.cyan(AGENT_FOLDER)} → ${chalk.gray(agentDir)}`);
+        if (gitignoreUpdated) {
+            console.log(`   ${chalk.cyan('.gitignore')} → Added ${chalk.yellow(AGENT_FOLDER)}`);
+        }
         console.log(chalk.gray('────────────────────────────────────────'));
         console.log(chalk.green('\n🎉 Happy coding!\n'));
     } catch (error) {
