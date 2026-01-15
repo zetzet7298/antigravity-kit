@@ -35,7 +35,8 @@ export default function Navbar() {
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2 cursor-pointer">
                     <div className="text-[var(--color-accent)]">
-                        <RocketIcon />
+                        {/* <RocketIcon /> */}
+                        <img src="/images/logo.png" alt="Logo" className="w-5" />
                     </div>
                     <span className="font-semibold text-lg hidden sm:inline">
                         Antigravity Kit
