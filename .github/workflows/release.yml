@@ -22,7 +22,7 @@ jobs:
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
 
-publish:
+  publish:
     runs-on: ubuntu-latest
     needs: release
     environment: Production
@@ -32,10 +32,8 @@ publish:
       - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          # XÓA DÒNG registry-url ĐỂ TRÁNH XUNG ĐỘT
       
       - run: npm ci
       
       - name: Publish to NPM
-        # Chỉ cần dòng này, không cần env: NODE_AUTH_TOKEN
         run: npm publish --provenance --access public
