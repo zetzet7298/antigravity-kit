@@ -8,3 +8,4 @@ src
 .env
 .DS_Store
 /templates/web
+/base-source
