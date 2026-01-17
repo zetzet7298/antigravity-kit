@@ -1,14 +1,15 @@
 {
   "name": "@vudovn/antigravity-kit",
-  "version": "1.0.9",
-  "description": "CLI tool to setup Antigravity Kit skills and MCPs",
+  "version": "1.1.0",
+  "description": "CLI tool to setup Antigravity Kit (Claude Code) and Amp Kit (Ampcode) skills and MCPs",
   "main": "bin/index.js",
   "type": "module",
   "scripts": {
     "test": "node --test test/*.test.js"
   },
   "bin": {
-    "ag-kit": "./bin/index.js"
+    "ag-kit": "./bin/index.js",
+    "amp-kit": "./bin/index.js"
   },
   "files": [
     "bin",
@@ -24,6 +25,9 @@
   },
   "keywords": [
     "antigravity",
+    "ampcode",
+    "amp",
+    "claude-code",
     "cli",
     "ai",
     "agent",

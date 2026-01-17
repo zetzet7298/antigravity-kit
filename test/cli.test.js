@@ -51,7 +51,7 @@ describe('ag-kit CLI', () => {
     describe('status command', () => {
         it('should show not installed when .agent does not exist', () => {
             const output = runCLI('status');
-            assert.ok(output.includes('Not installed'));
+            assert.ok(output.includes('No agent kits installed'));
         });
 
         it('should show installed when .agent exists', () => {
@@ -60,7 +60,16 @@ describe('ag-kit CLI', () => {
             fs.writeFileSync(path.join(agentDir, 'test.md'), 'test');
 
             const output = runCLI('status');
-            assert.ok(output.includes('Installed'));
+            assert.ok(output.includes('Antigravity Kit Installed'));
+        });
+
+        it('should show installed when .agents exists', () => {
+            const agentsDir = path.join(TEST_DIR, '.agents');
+            fs.mkdirSync(agentsDir, { recursive: true });
+            fs.writeFileSync(path.join(agentsDir, 'test.md'), 'test');
+
+            const output = runCLI('status');
+            assert.ok(output.includes('Amp Kit Installed'));
         });
     });
 

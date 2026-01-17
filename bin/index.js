@@ -20,8 +20,23 @@ const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'
 
 const REPO = 'github:vudovn/antigravity-kit';
 const TEMPLATES_FOLDER = 'templates';
-const AGENT_FOLDER = '.agent';
 const TEMP_FOLDER = '.temp_ag_kit';
+
+// Kit configurations
+const KITS = {
+    antigravity: {
+        name: 'Antigravity Kit',
+        folder: '.agent',
+        description: 'Claude Code / Antigravity agent skills',
+        emoji: '🚀',
+    },
+    amp: {
+        name: 'Amp Kit',
+        folder: '.agents',
+        description: 'Ampcode agent skills',
+        emoji: '⚡',
+    },
+};
 
 // ============================================================================
 // UTILITIES
@@ -29,11 +44,13 @@ const TEMP_FOLDER = '.temp_ag_kit';
 
 /**
  * Display ASCII banner
+ * @param {string} kitType - Kit type (antigravity or amp)
  */
-const showBanner = () => {
+const showBanner = (kitType = 'antigravity') => {
+    const kit = KITS[kitType] || KITS.antigravity;
     console.log(chalk.blueBright(`
     ╔══════════════════════════════════════╗
-    ║      🚀 ANTIGRAVITY KIT CLI 🚀       ║
+    ║      ${kit.emoji} ${kit.name.toUpperCase().padEnd(20)} ${kit.emoji}       ║
     ╚══════════════════════════════════════╝
     `));
 };
@@ -68,35 +85,37 @@ const cleanup = (tempDir) => {
 };
 
 /**
- * Copy .agent folder from temp to destination
+ * Copy agent folder from temp to destination
  * @param {string} tempDir - Temp directory
  * @param {string} destDir - Destination directory
+ * @param {string} sourceFolder - Source folder name (.agent or .agents)
  */
-const copyAgentFolder = (tempDir, destDir) => {
-    const sourceAgent = path.join(tempDir, TEMPLATES_FOLDER, AGENT_FOLDER);
+const copyAgentFolder = (tempDir, destDir, sourceFolder) => {
+    const sourceAgent = path.join(tempDir, TEMPLATES_FOLDER, sourceFolder);
 
     if (!fs.existsSync(sourceAgent)) {
-        throw new Error(`Could not find ${TEMPLATES_FOLDER}/${AGENT_FOLDER} folder in source repository!`);
+        throw new Error(`Could not find ${TEMPLATES_FOLDER}/${sourceFolder} folder in source repository!`);
     }
 
     fs.cpSync(sourceAgent, destDir, { recursive: true });
 };
 
 /**
- * Update .gitignore to include .agent folder
+ * Update .gitignore to include agent folder
  * @param {string} targetDir - Target project directory
+ * @param {string} agentFolder - Agent folder name
  * @returns {boolean} - True if .gitignore was updated
  */
-const updateGitignore = (targetDir) => {
+const updateGitignore = (targetDir, agentFolder) => {
     const gitignorePath = path.join(targetDir, '.gitignore');
-    const entryToAdd = AGENT_FOLDER;
+    const entryToAdd = agentFolder;
 
     // Check if .gitignore exists
     if (fs.existsSync(gitignorePath)) {
         const content = fs.readFileSync(gitignorePath, 'utf-8');
         const lines = content.split(/\r?\n/);
 
-        // Check if .agent is already in .gitignore
+        // Check if agent folder is already in .gitignore
         const hasEntry = lines.some(line =>
             line.trim() === entryToAdd ||
             line.trim() === `${entryToAdd}/` ||
@@ -105,7 +124,7 @@ const updateGitignore = (targetDir) => {
         );
 
         if (!hasEntry) {
-            // Add .agent to .gitignore
+            // Add agent folder to .gitignore
             const newContent = content.endsWith('\n')
                 ? `${content}${entryToAdd}\n`
                 : `${content}\n${entryToAdd}\n`;
@@ -113,7 +132,7 @@ const updateGitignore = (targetDir) => {
             return true;
         }
     } else {
-        // Create new .gitignore with .agent
+        // Create new .gitignore with agent folder
         fs.writeFileSync(gitignorePath, `${entryToAdd}\n`);
         return true;
     }
@@ -121,24 +140,42 @@ const updateGitignore = (targetDir) => {
     return false;
 };
 
+/**
+ * Detect which kit type to use based on options or command name
+ * @param {object} options - Command options
+ * @returns {string} - Kit type
+ */
+const detectKitType = (options) => {
+    // If explicitly specified via --kit option
+    if (options.kit) {
+        return options.kit;
+    }
+
+    // Default based on command name (amp-kit → amp, ag-kit → antigravity)
+    return options.defaultKit || 'antigravity';
+};
+
 // ============================================================================
 // COMMANDS
 // ============================================================================
 
 /**
- * Initialize .agent folder in project
+ * Initialize agent folder in project
  */
 const initCommand = async (options) => {
-    showBanner();
-
     const targetDir = path.resolve(options.path || process.cwd());
-    const tempDir = path.join(targetDir, TEMP_FOLDER);
-    const agentDir = path.join(targetDir, AGENT_FOLDER);
+    const kitType = detectKitType(options);
+    const kit = KITS[kitType];
+    
+    showBanner(kitType);
 
-    // Check if .agent already exists
+    const tempDir = path.join(targetDir, TEMP_FOLDER);
+    const agentDir = path.join(targetDir, kit.folder);
+
+    // Check if agent folder already exists
     if (fs.existsSync(agentDir)) {
         if (!options.force) {
-            console.log(chalk.yellow(`⚠️  Folder ${AGENT_FOLDER} already exists at: ${agentDir}`));
+            console.log(chalk.yellow(`⚠️  Folder ${kit.folder} already exists at: ${agentDir}`));
             const shouldOverwrite = await confirm('Do you want to overwrite it?');
 
             if (!shouldOverwrite) {
@@ -146,11 +183,11 @@ const initCommand = async (options) => {
                 process.exit(0);
             }
         }
-        console.log(chalk.gray(`Overwriting ${AGENT_FOLDER} folder...`));
+        console.log(chalk.gray(`Overwriting ${kit.folder} folder...`));
     }
 
     const spinner = ora({
-        text: 'Downloading...',
+        text: `Downloading ${kit.name}...`,
         color: 'cyan',
     }).start();
 
@@ -164,16 +201,16 @@ const initCommand = async (options) => {
 
         spinner.text = 'Installing...';
 
-        // Delete old .agent folder if exists (always clean install)
+        // Delete old agent folder if exists (always clean install)
         if (fs.existsSync(agentDir)) {
             fs.rmSync(agentDir, { recursive: true, force: true });
         }
 
-        // Copy .agent folder
-        copyAgentFolder(tempDir, agentDir);
+        // Copy agent folder
+        copyAgentFolder(tempDir, agentDir, kit.folder);
 
         // Update .gitignore
-        const gitignoreUpdated = updateGitignore(targetDir);
+        const gitignoreUpdated = updateGitignore(targetDir, kit.folder);
 
         // Cleanup
         cleanup(tempDir);
@@ -182,10 +219,10 @@ const initCommand = async (options) => {
 
         // Success message
         console.log(chalk.gray('\n────────────────────────────────────────'));
-        console.log(chalk.white('📁 Result:'));
-        console.log(`   ${chalk.cyan(AGENT_FOLDER)} → ${chalk.gray(agentDir)}`);
+        console.log(chalk.white(`📁 ${kit.name} Result:`));
+        console.log(`   ${chalk.cyan(kit.folder)} → ${chalk.gray(agentDir)}`);
         if (gitignoreUpdated) {
-            console.log(`   ${chalk.cyan('.gitignore')} → Added ${chalk.yellow(AGENT_FOLDER)}`);
+            console.log(`   ${chalk.cyan('.gitignore')} → Added ${chalk.yellow(kit.folder)}`);
         }
         console.log(chalk.gray('────────────────────────────────────────'));
         console.log(chalk.green('\n🎉 Happy coding!\n'));
@@ -197,23 +234,27 @@ const initCommand = async (options) => {
 };
 
 /**
- * Update existing .agent folder
+ * Update existing agent folder
  */
 const updateCommand = async (options) => {
-    showBanner();
-
     const targetDir = path.resolve(options.path || process.cwd());
-    const agentDir = path.join(targetDir, AGENT_FOLDER);
+    const kitType = detectKitType(options);
+    const kit = KITS[kitType];
+    
+    showBanner(kitType);
 
-    // Check if .agent exists
+    const agentDir = path.join(targetDir, kit.folder);
+
+    // Check if agent folder exists
     if (!fs.existsSync(agentDir)) {
-        console.log(chalk.red(`❌ Could not find ${AGENT_FOLDER} folder at: ${targetDir}`));
-        console.log(chalk.yellow(`💡 Tip: Run ${chalk.cyan('ag-kit init')} to install first.`));
+        console.log(chalk.red(`❌ Could not find ${kit.folder} folder at: ${targetDir}`));
+        const command = kitType === 'amp' ? 'amp-kit init' : 'ag-kit init';
+        console.log(chalk.yellow(`💡 Tip: Run ${chalk.cyan(command)} to install first.`));
         process.exit(1);
     }
 
     if (!options.force) {
-        console.log(chalk.yellow(`⚠️  Update will overwrite the entire ${AGENT_FOLDER} folder`));
+        console.log(chalk.yellow(`⚠️  Update will overwrite the entire ${kit.folder} folder`));
         const shouldUpdate = await confirm('Are you sure you want to continue?');
 
         if (!shouldUpdate) {
@@ -223,32 +264,62 @@ const updateCommand = async (options) => {
     }
 
     // Call init with force option
-    await initCommand({ ...options, force: true });
+    await initCommand({ ...options, force: true, kit: kitType });
 };
 
 /**
- * Show status of .agent folder
+ * Show status of agent folder
  */
 const statusCommand = (options) => {
     const targetDir = path.resolve(options.path || process.cwd());
-    const agentDir = path.join(targetDir, AGENT_FOLDER);
+    
+    console.log(chalk.blueBright('\n📊 Agent Kit Status\n'));
 
-    console.log(chalk.blueBright('\n📊 Antigravity Kit Status\n'));
+    let foundAny = false;
 
-    if (fs.existsSync(agentDir)) {
-        const stats = fs.statSync(agentDir);
-        const files = fs.readdirSync(agentDir, { recursive: true });
+    for (const [kitType, kit] of Object.entries(KITS)) {
+        const agentDir = path.join(targetDir, kit.folder);
 
-        console.log(chalk.green('✅ Installed'));
-        console.log(chalk.gray('────────────────────────────────────────'));
-        console.log(`📁 Path:     ${chalk.cyan(agentDir)}`);
-        console.log(`📅 Modified: ${chalk.gray(stats.mtime.toLocaleString('en-US'))}`);
-        console.log(`📄 Files:    ${chalk.yellow(files.length)} items`);
-        console.log(chalk.gray('────────────────────────────────────────\n'));
-    } else {
-        console.log(chalk.red('❌ Not installed'));
-        console.log(chalk.yellow(`💡 Run ${chalk.cyan('ag-kit init')} to install.\n`));
+        if (fs.existsSync(agentDir)) {
+            foundAny = true;
+            const stats = fs.statSync(agentDir);
+            const files = fs.readdirSync(agentDir, { recursive: true });
+
+            console.log(chalk.green(`✅ ${kit.name} Installed`));
+            console.log(chalk.gray('────────────────────────────────────────'));
+            console.log(`📁 Path:     ${chalk.cyan(agentDir)}`);
+            console.log(`📅 Modified: ${chalk.gray(stats.mtime.toLocaleString('en-US'))}`);
+            console.log(`📄 Files:    ${chalk.yellow(files.length)} items`);
+            console.log(chalk.gray('────────────────────────────────────────\n'));
+        }
     }
+
+    if (!foundAny) {
+        console.log(chalk.red('❌ No agent kits installed'));
+        console.log(chalk.yellow(`💡 Run ${chalk.cyan('ag-kit init')} for Antigravity Kit (Claude Code)`));
+        console.log(chalk.yellow(`💡 Run ${chalk.cyan('amp-kit init')} for Amp Kit (Ampcode)\n`));
+    }
+};
+
+/**
+ * List available kits
+ */
+const listCommand = () => {
+    console.log(chalk.blueBright('\n📦 Available Agent Kits\n'));
+    console.log(chalk.gray('────────────────────────────────────────'));
+    
+    for (const [key, kit] of Object.entries(KITS)) {
+        console.log(`${kit.emoji} ${chalk.cyan(kit.name)} (${chalk.gray(key)})`);
+        console.log(`   Folder: ${chalk.yellow(kit.folder)}`);
+        console.log(`   ${chalk.gray(kit.description)}`);
+        console.log();
+    }
+    
+    console.log(chalk.gray('────────────────────────────────────────'));
+    console.log(chalk.white('\nUsage:'));
+    console.log(`  ${chalk.cyan('ag-kit init')}      Install Antigravity Kit (.agent)`);
+    console.log(`  ${chalk.cyan('amp-kit init')}     Install Amp Kit (.agents)`);
+    console.log(`  ${chalk.cyan('ag-kit init --kit amp')}  Specify kit type explicitly\n`);
 };
 
 // ============================================================================
@@ -257,28 +328,35 @@ const statusCommand = (options) => {
 
 const program = new Command();
 
+// Detect if called as amp-kit
+const isAmpKit = process.argv[1]?.includes('amp-kit');
+const defaultKit = isAmpKit ? 'amp' : 'antigravity';
+const cliName = isAmpKit ? 'amp-kit' : 'ag-kit';
+
 program
-    .name('ag-kit')
-    .description('CLI tool to install and manage Antigravity Kit')
+    .name(cliName)
+    .description(`CLI tool to install and manage ${isAmpKit ? 'Amp Kit' : 'Antigravity Kit'}`)
     .version(pkg.version, '-v, --version', 'Display version number');
 
 // Command: init
 program
     .command('init')
-    .description('Install .agent folder into your project')
+    .description(`Install ${isAmpKit ? '.agents' : '.agent'} folder into your project`)
     .option('-f, --force', 'Overwrite if folder already exists', false)
     .option('-p, --path <dir>', 'Path to the project directory', process.cwd())
     .option('-b, --branch <name>', 'Select repository branch')
-    .action(initCommand);
+    .option('-k, --kit <type>', 'Kit type: antigravity (.agent) or amp (.agents)')
+    .action((options) => initCommand({ ...options, defaultKit }));
 
 // Command: update
 program
     .command('update')
-    .description('Update .agent folder to the latest version')
+    .description(`Update ${isAmpKit ? '.agents' : '.agent'} folder to the latest version`)
     .option('-f, --force', 'Skip confirmation prompt', false)
     .option('-p, --path <dir>', 'Path to the project directory', process.cwd())
     .option('-b, --branch <name>', 'Select repository branch')
-    .action(updateCommand);
+    .option('-k, --kit <type>', 'Kit type: antigravity (.agent) or amp (.agents)')
+    .action((options) => updateCommand({ ...options, defaultKit }));
 
 // Command: status
 program
@@ -286,6 +364,12 @@ program
     .description('Check installation status')
     .option('-p, --path <dir>', 'Path to the project directory', process.cwd())
     .action(statusCommand);
+
+// Command: list
+program
+    .command('list')
+    .description('List available agent kits')
+    .action(listCommand);
 
 // Parse arguments
 program.parse(process.argv);

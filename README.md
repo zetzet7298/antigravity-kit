@@ -1,16 +1,19 @@
-# 🚀 Antigravity Kit
+# 🚀 Antigravity Kit / ⚡ Amp Kit
 
 > **AI Agent Capability Expansion Toolkit** - A comprehensive collection of skills, rules, and workflows to supercharge AI coding assistants.
 
 [![Skills](https://img.shields.io/badge/Skills-41-blue)](#-skills-41)
 [![Agents](https://img.shields.io/badge/Agents-16-green)](#-agents-16)
 [![Workflows](https://img.shields.io/badge/Workflows-11-orange)](#-workflows-11)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-Supported-blueviolet)](#-installation)
+[![Ampcode](https://img.shields.io/badge/Ampcode-Supported-orange)](#-installation)
 
 ---
 
 ## 📋 Table of Contents
 
 - [Introduction](#-introduction)
+- [Supported Platforms](#-supported-platforms)
 - [Skills](#-skills)
 - [Rules](#-rules)
 - [Workflows](#-workflows)
@@ -23,7 +26,7 @@
 
 ## 🎯 Introduction
 
-**Antigravity Kit** is a comprehensive collection of:
+**Antigravity Kit / Amp Kit** is a comprehensive collection of:
 
 - **Skills** - Domain-specific expertise (React, Node.js, Database, Testing, UI/UX...)
 - **Rules** - Guidelines and constraints for agent behavior
@@ -34,6 +37,19 @@ This toolkit combines the best of:
 - 🛠️ **[ClaudeKit](https://claudekit.cc/)** - Production-ready AI subagents, workflows, and integrations
 
 Designed to integrate with AI agents supporting the **Agent Skills** standard.
+
+---
+
+## 🔌 Supported Platforms
+
+This toolkit supports multiple AI coding assistants:
+
+| Platform | Folder | Command | Agent File |
+|----------|--------|---------|------------|
+| **Claude Code** (Antigravity) | `.agent/` | `ag-kit` | `CLAUDE.md` |
+| **Ampcode** | `.agents/` | `amp-kit` | `AGENTS.md` |
+
+Both platforms share the same skills, rules, and workflows - just with different folder structures.
 
 ---
 
@@ -178,9 +194,12 @@ Workflows are step-by-step procedures. Invoke with slash command.
 npm install -g @vudovn/antigravity-kit
 
 # Then use commands anywhere
-# Navigate to your project
 cd your-project
+```
 
+#### For Claude Code (Antigravity)
+
+```bash
 # Install .agent folder
 ag-kit init
 
@@ -191,23 +210,41 @@ ag-kit update
 ag-kit status
 ```
 
+#### For Ampcode
+
+```bash
+# Install .agents folder
+amp-kit init
+
+# Update to the latest version
+amp-kit update
+
+# Check installation status
+amp-kit status
+```
+
 ### Using npx (No Install)
 
 ```bash
-# Navigate to your project
 cd your-project
 
-# Install .agent folder
+# For Claude Code
 npx @vudovn/antigravity-kit init
+
+# For Ampcode
+npx @vudovn/antigravity-kit init --kit amp
 ```
 
 ### CLI Commands
 
 | Command | Description |
 |---------|-------------|
-| `ag-kit init` | Install `.agent` folder into current directory |
+| `ag-kit init` | Install `.agent` folder (Claude Code) |
+| `amp-kit init` | Install `.agents` folder (Ampcode) |
 | `ag-kit update` | Update `.agent` to the latest version |
-| `ag-kit status` | Check installation status |
+| `amp-kit update` | Update `.agents` to the latest version |
+| `ag-kit status` | Check installation status for all kits |
+| `ag-kit list` | List available agent kits |
 
 #### Command Options
 
@@ -217,12 +254,14 @@ ag-kit init [options]
   -f, --force           # Overwrite if folder already exists
   -p, --path <dir>      # Path to the project directory
   -b, --branch <name>   # Select repository branch
+  -k, --kit <type>      # Kit type: antigravity or amp
 
 # update options
 ag-kit update [options]
   -f, --force           # Skip confirmation prompt
   -p, --path <dir>      # Path to the project directory
   -b, --branch <name>   # Select repository branch
+  -k, --kit <type>      # Kit type: antigravity or amp
 
 # status options
 ag-kit status [options]
@@ -277,7 +316,12 @@ Special thanks to the creators of these amazing tools for making AI-assisted dev
 
 ### Adding a New Skill
 
+#### For Claude Code (.agent)
 1. Create folder: `.agent/skills/your-skill/`
+2. Create `SKILL.md` with format:
+
+#### For Ampcode (.agents)
+1. Create folder: `.agents/skills/your-skill/`
 2. Create `SKILL.md` with format:
 
 ```markdown
@@ -293,7 +337,12 @@ Instructions for the agent...
 
 ### Adding a New Rule
 
+#### For Claude Code
 1. Create file: `.agent/rules/your-rule.md`
+
+#### For Ampcode
+1. Create file: `.agents/rules/your-rule.md`
+
 2. Add frontmatter:
 
 ```markdown
@@ -310,7 +359,12 @@ Content...
 
 ### Adding a New Workflow
 
+#### For Claude Code
 1. Create file: `.agent/workflows/your-workflow.md`
+
+#### For Ampcode
+1. Create file: `.agents/workflows/your-workflow.md`
+
 2. Format:
 
 ```markdown
@@ -322,6 +376,17 @@ description: Workflow description
 
 ## Step 1: ...
 ## Step 2: ...
+```
+
+### Adding a Custom Command (Ampcode only)
+
+1. Create file: `.agents/commands/your-command.md`
+2. Format:
+
+```markdown
+Your command prompt template here...
+
+Use $ARGUMENTS for dynamic input.
 ```
 
 ---
