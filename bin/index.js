@@ -18,7 +18,7 @@ const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'
 // CONSTANTS
 // ============================================================================
 
-const REPO = 'github:vudovn/antigravity-kit';
+const REPO = 'github:zetzet7298/antigravity-kit';
 const TEMPLATES_FOLDER = 'templates';
 const TEMP_FOLDER = '.temp_ag_kit';
 
